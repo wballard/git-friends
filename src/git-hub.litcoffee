@@ -14,9 +14,6 @@ and as such will need to prompt you for username and password.
     around. These commands give you a quick way to push and pull a bunch
     of related repositories.
 
-    The basic idea is that each <organization_or_user> is together in a
-    directory.
-
       pull       This will clone or pull as needed to get you all caught up
     """
 
@@ -88,7 +85,7 @@ Now, with repo list in hand, push a bunch of tasks to clone.
               console.log repo.name.blue
               repo_in_dir = path.join(options['<directory>'], repo.name)
               if fs.existsSync repo_in_dir
-                exec "git --work-tree=#{repo_in_dir} --git-dir=#{repo_in_dir}/.git fetch --all", callback
+                exec "git --work-tree=#{repo_in_dir} --git-dir=#{repo_in_dir}/.git pull --all", callback
               else
                 exec "git clone --recursive #{repo.ssh_url} #{repo_in_dir}", callback
           )
