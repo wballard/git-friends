@@ -1,6 +1,7 @@
 ```
 Usage:
   git-hub [options] pull organization <organization> [<directory>]
+  git-hub [options] pull user <user> [<directory>]
 
 Options:
   -h --help                show this help message and exit

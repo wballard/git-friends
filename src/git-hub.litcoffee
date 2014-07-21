@@ -4,6 +4,7 @@ and as such will need to prompt you for username and password.
     doc = """
     Usage:
       git-hub [options] pull organization <organization> [<directory>]
+      git-hub [options] pull user <user> [<directory>]
 
     Options:
       -h --help                show this help message and exit
@@ -20,8 +21,6 @@ and as such will need to prompt you for username and password.
     async = require 'async'
     fs = require 'fs'
     path = require 'path'
-    request = require 'request'
-    prompt = require 'prompt'
     mkdirp = require 'mkdirp'
     require 'colors'
     {docopt} = require 'docopt'
@@ -29,73 +28,43 @@ and as such will need to prompt you for username and password.
     options = docopt doc
     options['<directory>'] = path.normalize(options['<directory>'] or process.cwd())
 
-    prompt.start()
-    prompt.message = ''
-    prompt.delimiter = ''
 
 
     waterfall = []
-    if not options['--anonymous']
-      waterfall.push(
-        (callback) ->
-          schema = properties:
-            username:
-              message: 'Your GitHub username'.magenta + ':'.bold
-              default: process.env.USER
-              required: true
-            password:
-              message: 'Your GitHub password'.magenta + ':'.bold
-              required: true
-              hidden: true
-          prompt.get schema, callback
-      )
-    else
-      waterfall.push(
-        (callback) -> callback undefined, undefined
-      )
-    waterfall.push(
-      (input, callback) ->
-        args =
-          url: "https://api.github.com/orgs/#{options['<organization>']}/repos?per_page=500"
-          headers:
-            'User-Agent': 'git-friends cli'
-        if input
-          args.input =
-            user: input.username
-            pass: input.password
-            sendImmediately: false
-        request args, callback
-    )
+
+The waterfall is a pipeline with the options object as the context end to
+end.
+
+    waterfall.push (callback) ->
+      callback undefined, options
+
+    require('./pipelines/authentication.litcoffee') waterfall, options
+    if options.organization
+      require('./pipelines/organization_repositories.litcoffee') waterfall, options
+    if options.user
+      require('./pipelines/user_repositories.litcoffee') waterfall, options
+
 
 Now, with repo list in hand, push a bunch of tasks to clone.
 
-    waterfall.push(
-      (response, body, callback) ->
-        repo_waterfall = []
-        repo_waterfall.push(
-          (callback) ->
-            mkdirp options['<directory>'], callback
-        )
-        repo_waterfall.push(
-          (dir, callback) -> callback()
-        )
-        JSON.parse(body).forEach (repo) ->
-          repo_waterfall.push(
-            (callback) ->
-              console.log repo.name.blue
-              repo_in_dir = path.join(options['<directory>'], repo.name)
-              if fs.existsSync repo_in_dir
-                exec "git --work-tree=#{repo_in_dir} --git-dir=#{repo_in_dir}/.git pull --all", callback
-              else
-                exec "git clone --recursive #{repo.ssh_url} #{repo_in_dir}", callback
-          )
-          repo_waterfall.push(
-            (stdout, stderr, callback) ->
-              process.stdout.write stdout
-              process.stderr.write stderr
-              callback()
-          )
-        async.waterfall repo_waterfall, callback
-    )
+    waterfall.push (options, callback) ->
+      repo_waterfall = []
+      repo_waterfall.push (callback) ->
+        mkdirp options['<directory>'], callback
+      repo_waterfall.push (dir, callback) ->
+        callback()
+      options.repositories.forEach (repo) ->
+        repo_waterfall.push (callback) ->
+          console.error repo.name.blue
+          repo_in_dir = path.join(options['<directory>'], repo.name)
+          if fs.existsSync repo_in_dir
+            exec "git --work-tree=#{repo_in_dir} --git-dir=#{repo_in_dir}/.git pull --all", callback
+          else
+            exec "git clone --recursive #{repo.ssh_url} #{repo_in_dir}", callback
+        repo_waterfall.push (stdout, stderr, callback) ->
+          process.stdout.write stdout
+          process.stderr.write stderr
+          callback()
+      async.waterfall repo_waterfall, callback
 
     async.waterfall waterfall
