@@ -1,6 +1,6 @@
 {
   "name": "git-friends",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Handy extra commands for working with lots of git repositories",
   "bin": {
     "git-hub": "./bin/git-hub"
@@ -17,8 +17,8 @@
   },
   "homepage": "https://github.com/wballard/git-friends",
   "dependencies": {
-    "async": "^0.9.0",
-    "coffee-script": "^1.7.1",
+    "bluebird": "2.3.10",
+    "coffee-script": "^1.8.0",
     "colors": "^0.6.2",
     "docopt": "^0.4.0",
     "mkdirp": "^0.5.0",

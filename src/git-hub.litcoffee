@@ -18,7 +18,7 @@ and as such will need to prompt you for username and password.
       pull       This will clone or pull as needed to get you all caught up
     """
 
-    async = require 'async'
+    Promise = require 'bluebird'
     fs = require 'fs'
     path = require 'path'
     mkdirp = require 'mkdirp'
@@ -28,43 +28,33 @@ and as such will need to prompt you for username and password.
     options = docopt doc
     options['<directory>'] = path.normalize(options['<directory>'] or process.cwd())
 
-
-
-    waterfall = []
-
-The waterfall is a pipeline with the options object as the context end to
-end.
-
-    waterfall.push (callback) ->
-      callback undefined, options
-
-    require('./pipelines/authentication.litcoffee') waterfall, options
+    authentication = Promise.promisify require './pipelines/authentication.litcoffee'
     if options.organization
-      require('./pipelines/organization_repositories.litcoffee') waterfall, options
+      action = Promise.promisify require './pipelines/organization_repositories.litcoffee'
     if options.user
-      require('./pipelines/user_repositories.litcoffee') waterfall, options
+      action = Promise.promisify require './pipelines/user_repositories.litcoffee'
+    mkdirp = Promise.promisify mkdirp
 
-
-Now, with repo list in hand, push a bunch of tasks to clone.
-
-    waterfall.push (options, callback) ->
-      repo_waterfall = []
-      repo_waterfall.push (callback) ->
-        mkdirp options['<directory>'], callback
-      repo_waterfall.push (dir, callback) ->
-        callback()
-      options.repositories.forEach (repo) ->
-        repo_waterfall.push (callback) ->
-          console.error repo.name.blue
-          repo_in_dir = path.join(options['<directory>'], repo.name)
-          if fs.existsSync repo_in_dir
-            exec "git --work-tree=#{repo_in_dir} --git-dir=#{repo_in_dir}/.git pull --all", callback
-          else
-            exec "git clone --recursive #{repo.ssh_url} #{repo_in_dir}", callback
-        repo_waterfall.push (stdout, stderr, callback) ->
-          process.stdout.write stdout
-          process.stderr.write stderr
-          callback()
-      async.waterfall repo_waterfall, callback
-
-    async.waterfall waterfall
+    mkdirp(options['<directory>'])
+      .then -> options
+      .then(authentication)
+      .then(action)
+      .then ->
+        console.log "#{options.repositories.length} repositories found".green
+        options.repositories
+      .each (repo) ->
+        repo_in_dir = path.resolve(path.join(options['<directory>'], repo.name))
+        console.error repo.name.blue, "in", repo_in_dir.blue
+        if fs.existsSync repo_in_dir
+          fetcher = Promise.promisify (callback) ->
+            exec "git --work-tree=#{repo_in_dir} --git-dir=#{repo_in_dir}/.git pull --all", (err, stdout, stderr) ->
+              process.stdout.write stdout
+              process.stderr.write stderr
+              callback()
+        else
+          fetcher = Promise.promisify (callback) ->
+            exec "git clone --recursive #{repo.ssh_url} #{repo_in_dir}", (err, stdout, stderr) ->
+              process.stdout.write stdout
+              process.stderr.write stderr
+              callback()
+        fetcher()
