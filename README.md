@@ -1,3 +1,9 @@
+Get started, you'll need node.
+
+```
+npm install -g git-friends
+```
+
 ```
 Usage:
   git-hub [options] pull organization <organization> [<directory>]
