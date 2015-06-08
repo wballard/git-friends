@@ -29,10 +29,7 @@ and as such will need to prompt you for username and password.
     options['<directory>'] = path.normalize(options['<directory>'] or process.cwd())
 
     authentication = Promise.promisify require './pipelines/authentication.litcoffee'
-    if options.organization
-      action = Promise.promisify require './pipelines/organization_repositories.litcoffee'
-    if options.user
-      action = Promise.promisify require './pipelines/user_repositories.litcoffee'
+    action = Promise.promisify require './pipelines/repositories.litcoffee'
     mkdirp = Promise.promisify mkdirp
 
     mkdirp(options['<directory>'])
