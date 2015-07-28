@@ -16,6 +16,7 @@ Stages of a pipeline to get login information.
             required: true
           password:
             message: 'Your GitHub password'.magenta + ':'.bold
+            default: process.env.PASSWORD
             required: true
             hidden: true
         prompt.get schema, (err, input) ->

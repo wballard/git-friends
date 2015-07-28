@@ -9,10 +9,9 @@ to page until there is nothing left.
     module.exports = fetchRepositories = (options, callback) ->
       if options.organization
         part = 'orgs'
-        target = options['<organization>']
       else
         part = 'users'
-        target = options['<user>']
+      target = options['<owner>']
       options.page = options.page or 1
       if options.username and options.password
         args =
@@ -39,11 +38,9 @@ If we got any repos -- assume a next page and move on, but when no more come
 then we are finished.
 
         if new_repos.length
-          console.log "#{new_repos.length} repositories found on page #{options.page}".blue
           for repo in new_repos
             options.repositories.push repo
           options.page += 1
           fetchRepositories options, callback
         else
-          console.log response.headers
           callback undefined, options

@@ -3,8 +3,10 @@ and as such will need to prompt you for username and password.
 
     doc = """
     Usage:
-      git-hub [options] pull organization <organization> [<directory>]
-      git-hub [options] pull user <user> [<directory>]
+      git-hub [options] pull organization <owner> [<directory>]
+      git-hub [options] pull user <owner> [<directory>]
+      git-hub [options] ls pr organization <owner> [<directory>]
+      git-hub [options] ls pr user <owner> [<directory>]
 
     Options:
       -h --help                show this help message and exit
@@ -16,6 +18,7 @@ and as such will need to prompt you for username and password.
     of related repositories.
 
       pull       This will clone or pull as needed to get you all caught up
+      ls pr      See all the open pull requests.
     """
 
     Promise = require 'bluebird'
@@ -24,7 +27,7 @@ and as such will need to prompt you for username and password.
     mkdirp = require 'mkdirp'
     require 'colors'
     {docopt} = require 'docopt'
-    {exec} = require 'child_process'
+
     options = docopt doc
     options['<directory>'] = path.normalize(options['<directory>'] or process.cwd())
 
@@ -37,21 +40,10 @@ and as such will need to prompt you for username and password.
       .then(authentication)
       .then(action)
       .then ->
-        console.log "#{options.repositories.length} repositories found".green
+        console.log "#{options.repositories.length} repositories found".blue
         options.repositories
       .each (repo) ->
-        repo_in_dir = path.resolve(path.join(options['<directory>'], repo.name))
-        console.error repo.name.blue, "in", repo_in_dir.blue
-        if fs.existsSync repo_in_dir
-          fetcher = Promise.promisify (callback) ->
-            exec "git --work-tree=#{repo_in_dir} --git-dir=#{repo_in_dir}/.git pull --all", (err, stdout, stderr) ->
-              process.stdout.write stdout
-              process.stderr.write stderr
-              callback()
-        else
-          fetcher = Promise.promisify (callback) ->
-            exec "git clone --recursive #{repo.ssh_url} #{repo_in_dir}", (err, stdout, stderr) ->
-              process.stdout.write stdout
-              process.stderr.write stderr
-              callback()
-        fetcher()
+        if options.pull
+          require('./actions/pull_or_clone.litcoffee') options, repo
+        if options.ls and options.pr
+          require('./actions/ls_pr.litcoffee') options, repo
