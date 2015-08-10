@@ -32,18 +32,18 @@ and as such will need to prompt you for username and password.
     options['<directory>'] = path.normalize(options['<directory>'] or process.cwd())
 
     authentication = Promise.promisify require './pipelines/authentication.litcoffee'
-    action = Promise.promisify require './pipelines/repositories.litcoffee'
+    repositories = Promise.promisify require './pipelines/repositories.litcoffee'
     mkdirp = Promise.promisify mkdirp
 
     mkdirp(options['<directory>'])
       .then -> options
       .then(authentication)
-      .then(action)
+      .then(repositories)
       .then ->
         console.log "#{options.repositories.length} repositories found".blue
         options.repositories
       .each (repo) ->
         if options.pull
-          require('./actions/pull_or_clone.litcoffee') options, repo
+          return require('./actions/pull_or_clone.litcoffee') options, repo
         if options.ls and options.pr
-          require('./actions/ls_pr.litcoffee') options, repo
+          return require('./actions/ls_pr.litcoffee') options, repo
