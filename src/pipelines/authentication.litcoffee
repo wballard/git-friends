@@ -22,6 +22,7 @@ Stages of a pipeline to get login information.
         prompt.get schema, (err, input) ->
           options.username = input.username
           options.password = input.password
+          options.apiUrl = "https://#{options.username}:#{options.password}@api.github.com"
           callback undefined, options
       else
         callback undefined, options

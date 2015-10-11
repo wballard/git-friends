@@ -5,8 +5,10 @@ and as such will need to prompt you for username and password.
     Usage:
       git-hub [options] pull organization <owner> [<directory>]
       git-hub [options] pull user <owner> [<directory>]
-      git-hub [options] ls pr organization <owner> [<directory>]
-      git-hub [options] ls pr user <owner> [<directory>]
+      git-hub [options] ls pr organization <owner>
+      git-hub [options] ls pr user <owner>
+      git-hub [options] ls issues organization <owner>
+      git-hub [options] ls issues user <owner>
 
     Options:
       -h --help                show this help message and exit
@@ -47,3 +49,5 @@ and as such will need to prompt you for username and password.
           return require('./actions/pull_or_clone.litcoffee') options, repo
         if options.ls and options.pr
           return require('./actions/ls_pr.litcoffee') options, repo
+        if options.ls and options.issues
+          return require('./actions/ls_issues.litcoffee') options, repo
