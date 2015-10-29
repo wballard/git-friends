@@ -8,6 +8,12 @@ Stages of a pipeline to get login information.
       prompt.start()
       prompt.message = ''
       prompt.delimiter = ''
+      if process.env.GITHUB_USER && process.env.GITHUB_PASSWORD
+        options.username = process.env.GITHUB_USER
+        options.password = process.env.GITHUB_PASSWORD
+        options.apiUrl = "https://#{options.username}:#{options.password}@api.github.com"
+        return callback undefined, options
+
       if not options['--anonymous']
         schema = properties:
           username:
