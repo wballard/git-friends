@@ -21,7 +21,7 @@ Stages of a pipeline to get login information.
             default: process.env.USER
             required: true
           password:
-            message: 'Your GitHub password'.magenta + ':'.bold
+            message: 'Your GitHub password or token'.magenta + ':'.bold
             default: process.env.PASSWORD
             required: true
             hidden: true
