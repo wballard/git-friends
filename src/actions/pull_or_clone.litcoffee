@@ -15,7 +15,10 @@ For a repository, pull it or clone it by shelling.
             action = "git --work-tree=#{repo_in_dir} --git-dir=#{repo_in_dir}/.git fetch --all"
           else
             console.log "#{'cloning'.magenta} #{repo.name.blue} in #{repo_in_dir.blue}"
-            action = "git clone --recursive #{repo.ssh_url} #{repo_in_dir}"
+            if options['--anonymous']
+              action = "git clone --recursive #{repo.clone_url} #{repo_in_dir}"
+            else
+              action = "git clone --recursive #{repo.ssh_url} #{repo_in_dir}"
           resolve action
       .then (action) ->
         new Promise (resolve, reject) ->
